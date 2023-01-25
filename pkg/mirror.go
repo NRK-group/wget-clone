@@ -1,4 +1,4 @@
-package main
+package pkg
 
 import (
 	"fmt"
@@ -17,8 +17,11 @@ func FindStylesheet(doc *goquery.Document) {
 			return
 		} else {
 			if strings.Contains(imgSrc, ".css") && strings.Contains(imgSrc, "https://") {
-				// s.SetAttr("href", "keivon")
+				MakeAFolder("css")
+				s.SetAttr("href", "css/"+"fileName")
 			} else if strings.Contains(imgSrc, ".css") {
+				MakeAFolder("css")
+				s.SetAttr("href", "css/"+"fileName")
 			}
 			fmt.Println(imgSrc)
 			// fmt.Println(doc.Html())
@@ -34,8 +37,11 @@ func Findjs(doc *goquery.Document) {
 			return
 		} else {
 			if strings.Contains(imgSrc, ".js") && strings.Contains(imgSrc, "https://") {
-				// s.SetAttr("href", "keivon")
+				MakeAFolder("js")
+				s.SetAttr("src", "js/"+"fileName")
 			} else if strings.Contains(imgSrc, ".js") {
+				MakeAFolder("js")
+				s.SetAttr("src", "js/"+"fileName")
 			}
 			fmt.Println(imgSrc)
 			// fmt.Println(doc.Html())
@@ -54,8 +60,11 @@ func Findimg(doc *goquery.Document) {
 		} else {
 			for _, n := range listImgSuffixes {
 				if strings.Contains(imgSrc, n) && strings.Contains(imgSrc, "https://") {
-					// s.SetAttr("href", "keivon")
+					MakeAFolder("img")
+					s.SetAttr("src", "img/"+"fileName")
 				} else if strings.Contains(imgSrc, n) {
+					MakeAFolder("img")
+					s.SetAttr("src", "img/"+"fileName")
 				}
 			}
 		}
@@ -63,13 +72,13 @@ func Findimg(doc *goquery.Document) {
 }
 
 func MakeAFolder(name string) {
-	if _, err := os.Stat(name); os.IsNotExist(err) {
-		err := os.MkdirAll(name, 0777)
+	if _, err := os.Stat(name); os.IsNotExist(err) { // check if a folder exist
+		err := os.MkdirAll(name, 0o777)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
-		}
+	}
 }
 
 func mirror(url string) {
