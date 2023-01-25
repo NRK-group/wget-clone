@@ -16,9 +16,23 @@ type Download struct {
 	previousBarLength int
 }
 
+func (data *Download) UpdateProgressBar() {
+	buffer := make([]byte, 100000000)
+	for {
+		r, err := data.response.Body.Read(buffer)
+		if err != nil {
+			return
+		}
+		data.currentBytes += float64(r)
+		data.percentage = ((int(data.contentLength) - int(data.currentBytes)) / int(data.contentLength)) * 100
+		fmt.Println(data.CreateBarString())
+	}
+}
+
 func (data *Download) StartProgressBar() {
 	// Create Empty Progress Bar
 	fmt.Println(data.CreateBarString())
+	data.UpdateProgressBar()
 }
 
 func (data *Download) CreateBarString() string {
@@ -33,6 +47,8 @@ func ByteToUnit(byteCount float64) string {
 		byteCount /= 1024
 		unit++
 	}
+	// fmt.Println("BYTES After", byteCount, unit)
+
 	return strconv.Itoa(int(byteCount)) + " " + units[unit]
 }
 
