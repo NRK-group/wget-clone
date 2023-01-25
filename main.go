@@ -23,8 +23,8 @@ func init() {
 	flag.BoolVar(&I, "i", false, "Download multiple files")
 	flag.StringVar(&RateLimit, "rate-limit", "0", "The rate limit in k = KB/s or  M = MB/s")
 	flag.BoolVar(&Mirror, "mirror", false, "Mirror the whole site")
-	flag.StringVar(&Reject, "reject", "", "Reject files")
-	flag.StringVar(&Exclude, "exclude", "", "Exclude directory")
+	flag.StringVar(&Reject, "reject, R", "", "Reject files")
+	flag.StringVar(&Exclude, "exclude, X", "", "Exclude directory")
 }
 
 func main() {
