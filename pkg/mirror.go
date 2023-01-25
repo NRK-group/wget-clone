@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -43,7 +44,6 @@ func Findjs(doc *goquery.Document) {
 }
 
 func Findimg(doc *goquery.Document) {
-
 	listImgSuffixes := []string{"jpg", "gif", "webb", "jpeg", "png"}
 
 	doc.Find("img").Each(func(i int, s *goquery.Selection) {
@@ -60,6 +60,16 @@ func Findimg(doc *goquery.Document) {
 			}
 		}
 	})
+}
+
+func MakeAFolder(name string) {
+	if _, err := os.Stat(name); os.IsNotExist(err) {
+		err := os.MkdirAll(name, 0777)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		}
 }
 
 func mirror(url string) {
