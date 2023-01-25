@@ -24,7 +24,8 @@ func (data *Download) UpdateProgressBar() {
 			return
 		}
 		data.currentBytes += float64(r)
-		data.percentage = ((int(data.contentLength) - int(data.currentBytes)) / int(data.contentLength)) * 100
+		data.percentage = int((data.currentBytes*100) / data.contentLength)
+		// fmt.Println("New PERCENTAGE === ", ((int(data.contentLength) - int(data.currentBytes)) / int(data.contentLength)) * 100)
 		fmt.Println(data.CreateBarString())
 	}
 }
@@ -36,20 +37,32 @@ func (data *Download) StartProgressBar() {
 }
 
 func (data *Download) CreateBarString() string {
-	return ByteToUnit(data.currentBytes) + " / " + ByteToUnit(data.contentLength) + " [>                                                                      ] " + strconv.Itoa(data.percentage) + "% " + data.RateOfDownload() + " " + data.TimeRemaining()
+	return ByteToUnit(data.currentBytes) + " / " + ByteToUnit(data.contentLength) + " [] " + strconv.Itoa(data.percentage) + "% " + data.RateOfDownload() + " " + data.TimeRemaining()
 }
 
 // This function takes in a int representing bytes and returns a string of the input in the appropriate unit
 func ByteToUnit(byteCount float64) string {
-	units := []string{"B", "KB", "MB", "GB", "TB"}
+	units := []string{"B", "MB", "MB", "GB", "TB"}
 	unit := 0
-	for byteCount >= 1024 && unit < 4 {
+	// fmt.Println()
+	// fmt.Println()
+	// fmt.Println()
+	// fmt.Println()
+	// fmt.Println()
+
+	// fmt.Println("BYTES BEFORE: ", byteCount)
+	for byteCount > 1024 && unit < 4 {
 		byteCount /= 1024
 		unit++
 	}
-	// fmt.Println("BYTES After", byteCount, unit)
+	// fmt.Println("BYTES After: ", byteCount)
+	// fmt.Println()
+	// fmt.Println()
+	// fmt.Println()
+	// fmt.Println()
 
-	return strconv.Itoa(int(byteCount)) + " " + units[unit]
+
+	return strconv.Itoa(int(byteCount)) + units[unit]
 }
 
 func (data *Download) RateOfDownload() string {
