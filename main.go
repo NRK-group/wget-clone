@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+
+	"wget/pkg"
 )
 
 var (
@@ -50,4 +52,18 @@ func main() {
 	fmt.Println("Reject:", Reject)
 	fmt.Println("Exclude:", Exclude)
 	fmt.Println("URL:", flag.Arg(0))
+	urls := []string{flag.Arg(0)}
+	rate, err := pkg.GetRateLimit(RateLimit)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	resp, err := pkg.DownloadMultipleFiles(urls, rate)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	for i, r := range resp {
+		pkg.SaveBytesToFile(urls[i], r)
+	}
 }
