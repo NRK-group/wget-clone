@@ -3,7 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net/http"
 	"path"
+	"time"
 
 	"wget/pkg"
 )
@@ -24,7 +26,7 @@ func init() {
 	flag.StringVar(&O, "O", "", "Specify download filename")
 	flag.StringVar(&P, "P", "./", "Specify download directory")
 	flag.BoolVar(&I, "i", false, "Download multiple files")
-	flag.StringVar(&RateLimit, "rate-limit", "0", "The rate limit in k = KB/s or  M = MB/s")
+	flag.StringVar(&RateLimit, "rate-limit", "10000M", "The rate limit in k = KB/s or  M = MB/s")
 	flag.BoolVar(&Mirror, "mirror", false, "Mirror the whole site")
 	flag.StringVar(&Reject, "reject, R", "", "Reject files")
 	flag.StringVar(&Exclude, "exclude, X", "", "Exclude directory")
@@ -59,11 +61,21 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	resp, err := pkg.DownloadFile(url, rate)
+	// Send GET request to the provided URL
+	response, err := http.Get(url)
+	if err != nil {
+		// Return nil and error if request fails
+		return 
+	}
+	defer response.Body.Close()
+	
+	download := &pkg.Download{Response: response, StartTime: time.Now(), ContentLength: float64(response.ContentLength), BarWidth: pkg.GetTerminalLength()}
+	// download.StartProgressBar()
+	resp, err := download.DownloadFile(response, rate)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	fileName := path.Base(url) // extract the file name from the url
-	pkg.SaveBytesToFile("./js/"+fileName, resp)
+	pkg.SaveBytesToFile(fileName, resp)
 }
