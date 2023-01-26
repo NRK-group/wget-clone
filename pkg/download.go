@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"path"
 	"time"
 )
 
@@ -90,8 +89,7 @@ func DownloadMultipleFiles(urls []string, ratelimit int64) ([][]byte, error) {
 	return bytesArray, err
 }
 
-func SaveBytesToFile(url string, r []byte) {
-	fileName := path.Base(url) // extract the file name from the url
+func SaveBytesToFile(fileName string, r []byte) {
 	err := os.WriteFile(fileName, r, 0o644)
 	if err != nil {
 		fmt.Println(err)
