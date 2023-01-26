@@ -9,7 +9,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-func FindStylesheet(doc *goquery.Document) {
+func FindStylesheet(doc *goquery.Document, url string) {
 	doc.Find("link").Each(func(i int, s *goquery.Selection) {
 		imgSrc, exists := s.Attr("href")
 		if !exists {
@@ -24,12 +24,12 @@ func FindStylesheet(doc *goquery.Document) {
 				s.SetAttr("href", "css/"+"fileName")
 			}
 			fmt.Println(imgSrc)
-			// fmt.Println(doc.Html())
+			
 		}
 	})
 }
 
-func Findjs(doc *goquery.Document) {
+func Findjs(doc *goquery.Document, url string) {
 	doc.Find("script").Each(func(i int, s *goquery.Selection) {
 		imgSrc, exists := s.Attr("src")
 		if !exists {
@@ -44,12 +44,12 @@ func Findjs(doc *goquery.Document) {
 				s.SetAttr("src", "js/"+"fileName")
 			}
 			fmt.Println(imgSrc)
-			// fmt.Println(doc.Html())
+			
 		}
 	})
 }
 
-func Findimg(doc *goquery.Document) {
+func Findimg(doc *goquery.Document, url string) {
 	listImgSuffixes := []string{"jpg", "gif", "webb", "jpeg", "png"}
 
 	doc.Find("img").Each(func(i int, s *goquery.Selection) {
@@ -68,6 +68,7 @@ func Findimg(doc *goquery.Document) {
 				}
 			}
 		}
+		fmt.Println(imgSrc)
 	})
 }
 
@@ -80,6 +81,8 @@ func MakeAFolder(name string) {
 		}
 	}
 }
+
+
 
 func mirror(url string) {
 	res, err := http.Get("https://jonathanmh.com/web-scraping-golang-goquery/")
@@ -94,7 +97,7 @@ func mirror(url string) {
 		return
 	}
 
-	FindStylesheet(doc)
-	Findjs(doc)
-	Findimg(doc)
+	FindStylesheet(doc, url)
+	Findjs(doc, url)
+	Findimg(doc, url)
 }
