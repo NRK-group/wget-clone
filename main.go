@@ -47,9 +47,11 @@ func main() {
 	fmt.Println("Rate Limit: ", RateLimit)
 	if Mirror {
 		fmt.Println("Mirror the whole site is enabled")
+
 	} else {
 		fmt.Println("Mirror the whole site is disabled")
 	}
+	/*
 	fmt.Println("Reject:", Reject)
 	fmt.Println("Exclude:", Exclude)
 	fmt.Println("URL:", flag.Arg(0))
@@ -66,4 +68,5 @@ func main() {
 	}
 	fileName := path.Base(url) // extract the file name from the url
 	pkg.SaveBytesToFile("./js/"+fileName, resp)
+	*/
 }

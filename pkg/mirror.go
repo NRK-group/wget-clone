@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 )
 
-func FindStylesheet(doc *goquery.Document, url string) {
+func FindStylesheet(doc *goquery.Document, url string) (rdoc *goquery.Document) {
 	doc.Find("link").Each(func(i int, s *goquery.Selection) {
 		imgSrc, exists := s.Attr("href")
 		if !exists {
@@ -18,18 +19,22 @@ func FindStylesheet(doc *goquery.Document, url string) {
 		} else {
 			if strings.Contains(imgSrc, ".css") && strings.Contains(imgSrc, "https://") {
 				MakeAFolder("css")
-				s.SetAttr("href", "css/"+"fileName")
+				fileName := path.Base(imgSrc)
+				s.SetAttr("href", "css/"+fileName)
 			} else if strings.Contains(imgSrc, ".css") {
+				fileName := path.Base(imgSrc)
 				MakeAFolder("css")
-				s.SetAttr("href", "css/"+"fileName")
+				s.SetAttr("href", "css/"+fileName)
 			}
-			fmt.Println(imgSrc)
-			
+			// fmt.Println(imgSrc)
+
 		}
 	})
+
+	return doc
 }
 
-func Findjs(doc *goquery.Document, url string) {
+func Findjs(doc *goquery.Document, url string) (rdoc *goquery.Document) {
 	doc.Find("script").Each(func(i int, s *goquery.Selection) {
 		imgSrc, exists := s.Attr("src")
 		if !exists {
@@ -38,18 +43,22 @@ func Findjs(doc *goquery.Document, url string) {
 		} else {
 			if strings.Contains(imgSrc, ".js") && strings.Contains(imgSrc, "https://") {
 				MakeAFolder("js")
-				s.SetAttr("src", "js/"+"fileName")
+				fileName := path.Base(imgSrc)
+				s.SetAttr("src", "js/"+fileName)
 			} else if strings.Contains(imgSrc, ".js") {
+				fileName := path.Base(imgSrc)
 				MakeAFolder("js")
-				s.SetAttr("src", "js/"+"fileName")
+				s.SetAttr("src", "js/"+fileName)
 			}
-			fmt.Println(imgSrc)
-			
+			// fmt.Println(imgSrc)
+
 		}
 	})
+
+	return doc
 }
 
-func Findimg(doc *goquery.Document, url string) {
+func Findimg(doc *goquery.Document, url string) (rdoc *goquery.Document) {
 	listImgSuffixes := []string{"jpg", "gif", "webb", "jpeg", "png"}
 
 	doc.Find("img").Each(func(i int, s *goquery.Selection) {
@@ -61,15 +70,19 @@ func Findimg(doc *goquery.Document, url string) {
 			for _, n := range listImgSuffixes {
 				if strings.Contains(imgSrc, n) && strings.Contains(imgSrc, "https://") {
 					MakeAFolder("img")
-					s.SetAttr("src", "img/"+"fileName")
+					fileName := path.Base(imgSrc)
+					s.SetAttr("src", "img/"+fileName)
 				} else if strings.Contains(imgSrc, n) {
+					fileName := path.Base(imgSrc)
 					MakeAFolder("img")
-					s.SetAttr("src", "img/"+"fileName")
+					s.SetAttr("src", "img/"+fileName)
 				}
 			}
 		}
-		fmt.Println(imgSrc)
+		// fmt.Println(imgSrc)
 	})
+
+	return doc
 }
 
 func MakeAFolder(name string) {
@@ -82,10 +95,8 @@ func MakeAFolder(name string) {
 	}
 }
 
-
-
 func mirror(url string) {
-	res, err := http.Get("https://jonathanmh.com/web-scraping-golang-goquery/")
+	res, err := http.Get(url) //"https://jonathanmh.com/web-scraping-golang-goquery/"
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -97,7 +108,8 @@ func mirror(url string) {
 		return
 	}
 
-	FindStylesheet(doc, url)
-	Findjs(doc, url)
-	Findimg(doc, url)
+	holder := FindStylesheet(doc, url)
+	holder = Findjs(holder, url)
+	holder = Findimg(holder, url)
+	holder.Html()
 }
