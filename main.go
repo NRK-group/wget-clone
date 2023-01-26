@@ -36,6 +36,19 @@ func init() {
 
 func main() {
 	flag.Parse()
+
+	url := flag.Arg(0)
+
+	// Send GET request to the provided URL
+	response, err := http.Get(url)
+	if err != nil {
+		// Return nil and error if request fails
+		return
+	}
+	defer response.Body.Close()
+
+	download := &pkg.Download{Response: response, StartTime: time.Now(), ContentLength: float64(response.ContentLength), BarWidth: pkg.GetTerminalLength()}
+
 	if B {
 		fmt.Println("Output in wget-log is enabled")
 	} else {
@@ -51,7 +64,6 @@ func main() {
 	fmt.Println("Rate Limit: ", RateLimit)
 	if Mirror {
 		fmt.Println("Mirror the whole site is enabled")
-		url := flag.Arg(0)
 		pkg.Mirror(url, Exclude, Reject)
 	} else {
 		fmt.Println("Mirror the whole site is disabled")
@@ -59,21 +71,13 @@ func main() {
 	fmt.Println("Reject:", Reject)
 	fmt.Println("Exclude:", Exclude)
 	fmt.Println("URL:", flag.Arg(0))
-	url := flag.Arg(0)
+
 	rate, err := pkg.GetRateLimit(RateLimit)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	// Send GET request to the provided URL
-	response, err := http.Get(url)
-	if err != nil {
-		// Return nil and error if request fails
-		return
-	}
-	defer response.Body.Close()
 
-	download := &pkg.Download{Response: response, StartTime: time.Now(), ContentLength: float64(response.ContentLength), BarWidth: pkg.GetTerminalLength()}
 	resp, err := download.DownloadFile(response, rate)
 	if err != nil {
 		fmt.Println(err)
