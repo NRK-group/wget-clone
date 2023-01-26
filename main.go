@@ -10,7 +10,16 @@ func main() {
 	if o != nil {
 		return
 	}
-	currentDownload := Download{startTime: time.Now(), contentLength: float64(response.ContentLength), response: response}
+	currentDownload := Download{startTime: time.Now(), contentLength: float64(response.ContentLength), response: response, BarWidth: GetTerminalLength()}
+	// fmt.Println()
+	// fmt.Print("D")
+
+	// fmt.Print("Hello,	")
+	// fmt.Print("world!")
+	// fmt.Println()
+	// fmt.Fprintf(os.Stdout, "\a")
+
+	// fmt.Print("Goodbye, ")
 
 	currentDownload.StartProgressBar()
 }
