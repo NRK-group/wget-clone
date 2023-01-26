@@ -50,12 +50,12 @@ func (data *Download) CreateProgressBar() {
 }
 
 func (data *Download) RateOfCurrent() string {
-	elapsed := time.Now().Sub(data.StartTime)
+	elapsed := time.Since(data.StartTime)
 	return ByteToUnit(data.CurrentBytes/elapsed.Seconds()) + "/s"
 }
 
 func (data *Download) TimeRemaining() string {
-	BytesPerSecond := data.CurrentBytes / time.Now().Sub(data.StartTime).Seconds()
+	BytesPerSecond := data.CurrentBytes / time.Since(data.StartTime).Seconds()
 	RemainingBytes := (data.ContentLength - data.CurrentBytes)
 	RemainingTime := RemainingBytes / BytesPerSecond
 	return strconv.Itoa(int(RemainingTime)) + "s"

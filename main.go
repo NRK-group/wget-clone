@@ -34,10 +34,6 @@ func init() {
 	flag.StringVar(&Exclude, "exclude, X", "", "Exclude directory")
 }
 
-func download(response *http.Response) *pkg.Download {
-	return &pkg.Download{Response: response, StartTime: time.Now(), ContentLength: float64(response.ContentLength), BarWidth: pkg.GetTerminalLength()}
-}
-
 func main() {
 	flag.Parse()
 	url := flag.Arg(0)
@@ -54,7 +50,7 @@ func main() {
 		return
 	}
 	defer response.Body.Close()
-	download := download(response)
+	download := &pkg.Download{Response: response, StartTime: time.Now(), ContentLength: float64(response.ContentLength), BarWidth: pkg.GetTerminalLength(), Path: P + fileName, Url: url}
 	if B {
 		fmt.Println("Output in wget-log is enabled")
 	} else {
@@ -69,7 +65,6 @@ func main() {
 			fmt.Println(err)
 			return
 		}
-		fileName := path.Base(url) // extract the file name from the url
 		if O != "" {
 			fileName = O
 		}
@@ -83,5 +78,6 @@ func main() {
 			filePath = path.Join(usr, P[1:])
 		}
 		pkg.SaveBytesToFile(path.Join(filePath, fileName), resp)
+		download.PrintAfter()
 	}
 }
