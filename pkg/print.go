@@ -24,7 +24,7 @@ func (data *Download) WriteToLogBefore() {
 	fmt.Println("Output will be written to ‘wget-log’.")
 	var s string
 	// start at 2017-10-14 03:46:06
-	s += "start at " + strings.Split(data.StartTime.String(), ".")[0] + "\n"
+	s += "\nstart at " + strings.Split(data.StartTime.String(), ".")[0] + "\n"
 	// sending request, awaiting response... status 200 OK
 	s += "sending request, awaiting response..." + data.Response.Status + "\n"
 	// content size: 56370 [~0.06MB]
@@ -48,4 +48,22 @@ func (data *Download) WriteToLogAfter() {
 		fmt.Println("Error writing to log file: ", err)
 	}
 	log.Write([]byte(s))
+}
+
+
+func (data *Download) PrintOrLogBefore(B bool) {
+	if B {
+		data.HideBar = true
+		data.WriteToLogBefore()
+	} else {
+		data.PrintBefore()
+	}
+}
+
+func (data *Download) PrintOrLogAfter(B bool) {
+	if B {
+		data.WriteToLogAfter()
+	} else {
+		data.PrintAfter()
+	}
 }
