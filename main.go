@@ -53,8 +53,6 @@ func main() {
 	} else {
 		fmt.Println("Mirror the whole site is disabled")
 	}
-	fmt.Println("Exclude:", Exclude)
-	fmt.Println("Reject:", Reject)
 	/*
 		fmt.Println("Reject:", Reject)
 		fmt.Println("Exclude:", Exclude)

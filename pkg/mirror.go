@@ -32,10 +32,13 @@ func FindStylesheet(doc *goquery.Document, url, folderName string) (rdoc *goquer
 				fileName := path.Base(imgSrc)
 				MakeAFolder("./"+folderName +"/css")
 
-				resp, err := DownloadFile(url+imgSrc, 0)
+				resp, err := DownloadFile("https://"+folderName+imgSrc, 0)
 				if err != nil {
 					fmt.Println(err)
 					return
+				}
+				if(fileName[len(fileName)-4:] != ".css"){
+					fileName = fileName+".css"
 				}
 
 				SaveBytesToFile("./"+folderName +"/css/"+fileName, resp)
@@ -95,6 +98,7 @@ func Findimg(doc *goquery.Document, url, folderName, Reject string) (rdoc *goque
 			return
 		} else {
 			for _, n := range listImgSuffixes {
+				if Reject != n {
 				if strings.Contains(imgSrc, n) && strings.Contains(imgSrc, "https://") {
 					MakeAFolder("./"+folderName +"/img")
 					fileName := path.Base(imgSrc)
@@ -120,6 +124,7 @@ func Findimg(doc *goquery.Document, url, folderName, Reject string) (rdoc *goque
 					SaveBytesToFile("./"+folderName +"/img/"+fileName, resp)
 					s.SetAttr("src", "./img/"+fileName)
 				}
+			}
 			}
 		}
 		// fmt.Println(imgSrc)
