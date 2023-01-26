@@ -50,7 +50,8 @@ func main() {
 	defer response.Body.Close()
 
 	download := &pkg.Download{Response: response, StartTime: time.Now(), ContentLength: float64(response.ContentLength), BarWidth: pkg.GetTerminalLength(), Path: P + fileName, Url: url}
-	download.PrintBefore()
+	download.WriteToLogBefore()
+
 
 	resp, err := download.DownloadFile(response, rate)
 	if err != nil {
@@ -58,6 +59,6 @@ func main() {
 		return
 	}
 	pkg.SaveBytesToFile(fileName, resp)
-	download.PrintAfter()
+	download.WriteToLogAfter()
 	
 }
