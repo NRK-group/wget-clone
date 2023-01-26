@@ -34,28 +34,8 @@ func init() {
 
 func main() {
 	flag.Parse()
-	if B {
-		fmt.Println("Output in wget-log is enabled")
-	} else {
-		fmt.Println("Output in wget-log is disabled")
-	}
-	fmt.Println("filename:", O)
-	fmt.Println("directory:", P)
-	if I {
-		fmt.Println("Download multiple files is enabled")
-	} else {
-		fmt.Println("Download multiple files is disabled")
-	}
-	fmt.Println("Rate Limit: ", RateLimit)
-	if Mirror {
-		fmt.Println("Mirror the whole site is enabled")
-	} else {
-		fmt.Println("Mirror the whole site is disabled")
-	}
-	fmt.Println("Reject:", Reject)
-	fmt.Println("Exclude:", Exclude)
-	fmt.Println("URL:", flag.Arg(0))
 	url := flag.Arg(0)
+	fileName := path.Base(url) // extract the file name from the url
 	rate, err := pkg.GetRateLimit(RateLimit)
 	if err != nil {
 		fmt.Println(err)
@@ -69,12 +49,15 @@ func main() {
 	}
 	defer response.Body.Close()
 
-	download := &pkg.Download{Response: response, StartTime: time.Now(), ContentLength: float64(response.ContentLength), BarWidth: pkg.GetTerminalLength()}
+	download := &pkg.Download{Response: response, StartTime: time.Now(), ContentLength: float64(response.ContentLength), BarWidth: pkg.GetTerminalLength(), Path: P + fileName, Url: url}
+	download.PrintBefore()
+
 	resp, err := download.DownloadFile(response, rate)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	fileName := path.Base(url) // extract the file name from the url
 	pkg.SaveBytesToFile(fileName, resp)
+	download.PrintAfter()
+	
 }
