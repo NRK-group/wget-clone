@@ -20,11 +20,30 @@ func FindStylesheet(doc *goquery.Document, url string) (rdoc *goquery.Document) 
 			if strings.Contains(imgSrc, ".css") && strings.Contains(imgSrc, "https://") {
 				MakeAFolder("css")
 				fileName := path.Base(imgSrc)
-				s.SetAttr("href", "css/"+fileName)
+
+
+				resp, err := DownloadFile(imgSrc, 0)
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
+				SaveBytesToFile("./css/"+fileName, resp)
+
+				s.SetAttr("href", "./css/"+fileName)
 			} else if strings.Contains(imgSrc, ".css") {
 				fileName := path.Base(imgSrc)
 				MakeAFolder("css")
-				s.SetAttr("href", "css/"+fileName)
+
+
+				resp, err := DownloadFile(url+imgSrc, 0)
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
+
+				SaveBytesToFile("./css/"+fileName, resp)
+
+				s.SetAttr("href", "./css/"+fileName)
 			}
 			// fmt.Println(imgSrc)
 
@@ -44,11 +63,28 @@ func Findjs(doc *goquery.Document, url string) (rdoc *goquery.Document) {
 			if strings.Contains(imgSrc, ".js") && strings.Contains(imgSrc, "https://") {
 				MakeAFolder("js")
 				fileName := path.Base(imgSrc)
-				s.SetAttr("src", "js/"+fileName)
+				fmt.Println("url--", imgSrc)
+				resp, err :=DownloadFile(imgSrc, 0)
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
+				SaveBytesToFile("./js/"+fileName, resp)
+
+				s.SetAttr("src", "./js/"+fileName)
 			} else if strings.Contains(imgSrc, ".js") {
 				fileName := path.Base(imgSrc)
 				MakeAFolder("js")
-				s.SetAttr("src", "js/"+fileName)
+
+
+				resp, err := DownloadFile(url+imgSrc, 0)
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
+				SaveBytesToFile("./js/"+fileName, resp)
+
+				s.SetAttr("src", "./js/"+fileName)
 			}
 			// fmt.Println(imgSrc)
 
@@ -71,11 +107,29 @@ func Findimg(doc *goquery.Document, url string) (rdoc *goquery.Document) {
 				if strings.Contains(imgSrc, n) && strings.Contains(imgSrc, "https://") {
 					MakeAFolder("img")
 					fileName := path.Base(imgSrc)
-					s.SetAttr("src", "img/"+fileName)
+
+
+					resp, err := DownloadFile(imgSrc, 0)
+					if err != nil {
+						fmt.Println(err)
+						return
+					}
+
+					SaveBytesToFile("./img/"+fileName, resp)
+
+					s.SetAttr("src", "./img/"+fileName)
 				} else if strings.Contains(imgSrc, n) {
 					fileName := path.Base(imgSrc)
 					MakeAFolder("img")
-					s.SetAttr("src", "img/"+fileName)
+
+
+					resp, err := DownloadFile(url+imgSrc, 0)
+					if err != nil {
+						fmt.Println(err)
+						return
+					}
+					SaveBytesToFile("./img/"+fileName, resp)
+					s.SetAttr("src", "./img/"+fileName)
 				}
 			}
 		}
@@ -95,7 +149,7 @@ func MakeAFolder(name string) {
 	}
 }
 
-func mirror(url string) {
+func Mirror(url string) {
 	res, err := http.Get(url) //"https://jonathanmh.com/web-scraping-golang-goquery/"
 	if err != nil {
 		fmt.Println(err)
@@ -111,5 +165,5 @@ func mirror(url string) {
 	holder := FindStylesheet(doc, url)
 	holder = Findjs(holder, url)
 	holder = Findimg(holder, url)
-	holder.Html()
+	fmt.Println(holder.Html())
 }
