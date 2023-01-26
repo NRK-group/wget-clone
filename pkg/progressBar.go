@@ -15,16 +15,18 @@ type Download struct {
 	ContentLength     float64
 	CurrentBytes      float64
 	StartTime         time.Time
-	Percentage        int
+	Percentage        float64
 	PreviousBarLength int
 	ProgressBar       string
 	BarWidth          int
 	HideBar           bool
+	Path              string
+	Url               string
 }
 
 func (data *Download) UpdateProgressBar(n int) {
 	data.CurrentBytes += float64(n)
-	data.Percentage = int((data.CurrentBytes * 100) / data.ContentLength)
+	data.Percentage = (data.CurrentBytes * 100) / data.ContentLength
 	fmt.Fprintf(os.Stdout, "\r")
 	if !data.HideBar {
 		data.PrintProgressBar()
@@ -43,19 +45,8 @@ func (data *Download) PrintProgressBar() {
 }
 
 func (data *Download) CreateProgressBar() {
-	data.ProgressBar = ByteToUnit(data.CurrentBytes) + " / " + ByteToUnit(data.ContentLength) + data.ProgressString() + strconv.Itoa(data.Percentage) + "% " + data.RateOfCurrent() + " " + data.TimeRemaining()
+	data.ProgressBar = ByteToUnit(data.CurrentBytes) + " / " + ByteToUnit(data.ContentLength) + data.ProgressString() + fmt.Sprintf("%.1f", data.Percentage) + "% " + data.RateOfCurrent() + " " + data.TimeRemaining()
 	data.CheckNewLengthWithPrevious()
-}
-
-// This function takes in a int representing bytes and returns a string of the input in the appropriate unit
-func ByteToUnit(byteCount float64) string {
-	units := []string{"B", "KB", "MB", "GB", "TB"}
-	unit := 0
-	for byteCount > 1024 && unit < 4 {
-		byteCount /= 1024
-		unit++
-	}
-	return strconv.Itoa(int(byteCount)) + units[unit]
 }
 
 func (data *Download) RateOfCurrent() string {

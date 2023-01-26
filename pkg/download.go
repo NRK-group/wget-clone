@@ -14,7 +14,7 @@ func (download *Download) DownloadFile(response *http.Response, rateLimit int64)
 	if response.StatusCode != http.StatusOK {
 		// Return nil and error if response status is not OK
 		return nil, errors.New(response.Status)
-	}
+	} 
 	var data bytes.Buffer
 		// Create a ticker with a 1 second interval
 		ticker := time.NewTicker(time.Second)
