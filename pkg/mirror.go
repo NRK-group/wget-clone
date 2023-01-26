@@ -10,30 +10,27 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-func FindStylesheet(doc *goquery.Document, url string) (rdoc *goquery.Document) {
+func FindStylesheet(doc *goquery.Document, url, folderName string) (rdoc *goquery.Document) {
 	doc.Find("link").Each(func(i int, s *goquery.Selection) {
 		imgSrc, exists := s.Attr("href")
 		if !exists {
-			fmt.Println("link href not found")
 			return
 		} else {
 			if strings.Contains(imgSrc, ".css") && strings.Contains(imgSrc, "https://") {
-				MakeAFolder("css")
+				MakeAFolder("./"+folderName +"/css/")
 				fileName := path.Base(imgSrc)
-
 
 				resp, err := DownloadFile(imgSrc, 0)
 				if err != nil {
 					fmt.Println(err)
 					return
 				}
-				SaveBytesToFile("./css/"+fileName, resp)
+				SaveBytesToFile("./"+folderName +"/css/"+fileName, resp)
 
 				s.SetAttr("href", "./css/"+fileName)
 			} else if strings.Contains(imgSrc, ".css") {
 				fileName := path.Base(imgSrc)
-				MakeAFolder("css")
-
+				MakeAFolder("./"+folderName +"/css")
 
 				resp, err := DownloadFile(url+imgSrc, 0)
 				if err != nil {
@@ -41,73 +38,66 @@ func FindStylesheet(doc *goquery.Document, url string) (rdoc *goquery.Document) 
 					return
 				}
 
-				SaveBytesToFile("./css/"+fileName, resp)
-
+				SaveBytesToFile("./"+folderName +"/css/"+fileName, resp)
+				
 				s.SetAttr("href", "./css/"+fileName)
 			}
 			// fmt.Println(imgSrc)
-
 		}
 	})
 
 	return doc
 }
 
-func Findjs(doc *goquery.Document, url string) (rdoc *goquery.Document) {
+func Findjs(doc *goquery.Document, url, folderName string) (rdoc *goquery.Document) {
 	doc.Find("script").Each(func(i int, s *goquery.Selection) {
 		imgSrc, exists := s.Attr("src")
 		if !exists {
-			fmt.Println("script src not found")
 			return
 		} else {
 			if strings.Contains(imgSrc, ".js") && strings.Contains(imgSrc, "https://") {
-				MakeAFolder("js")
+				MakeAFolder("./"+folderName +"/js")
 				fileName := path.Base(imgSrc)
-				fmt.Println("url--", imgSrc)
-				resp, err :=DownloadFile(imgSrc, 0)
+				resp, err := DownloadFile(imgSrc, 0)
 				if err != nil {
 					fmt.Println(err)
 					return
 				}
-				SaveBytesToFile("./js/"+fileName, resp)
+				SaveBytesToFile("./"+folderName +"/js/"+fileName, resp)
 
 				s.SetAttr("src", "./js/"+fileName)
 			} else if strings.Contains(imgSrc, ".js") {
 				fileName := path.Base(imgSrc)
-				MakeAFolder("js")
-
+				MakeAFolder("./"+folderName +"/js")
 
 				resp, err := DownloadFile(url+imgSrc, 0)
 				if err != nil {
 					fmt.Println(err)
 					return
 				}
-				SaveBytesToFile("./js/"+fileName, resp)
-
+				SaveBytesToFile("./"+folderName +"/js/"+fileName, resp)
+				
 				s.SetAttr("src", "./js/"+fileName)
 			}
 			// fmt.Println(imgSrc)
-
 		}
 	})
 
 	return doc
 }
 
-func Findimg(doc *goquery.Document, url string) (rdoc *goquery.Document) {
+func Findimg(doc *goquery.Document, url, folderName, Reject string) (rdoc *goquery.Document) {
 	listImgSuffixes := []string{"jpg", "gif", "webb", "jpeg", "png"}
 
 	doc.Find("img").Each(func(i int, s *goquery.Selection) {
 		imgSrc, exists := s.Attr("src")
 		if !exists {
-			fmt.Println("Image src not found")
 			return
 		} else {
 			for _, n := range listImgSuffixes {
 				if strings.Contains(imgSrc, n) && strings.Contains(imgSrc, "https://") {
-					MakeAFolder("img")
+					MakeAFolder("./"+folderName +"/img")
 					fileName := path.Base(imgSrc)
-
 
 					resp, err := DownloadFile(imgSrc, 0)
 					if err != nil {
@@ -115,20 +105,19 @@ func Findimg(doc *goquery.Document, url string) (rdoc *goquery.Document) {
 						return
 					}
 
-					SaveBytesToFile("./img/"+fileName, resp)
+					SaveBytesToFile("./"+folderName +"/img/"+fileName, resp)
 
 					s.SetAttr("src", "./img/"+fileName)
 				} else if strings.Contains(imgSrc, n) {
 					fileName := path.Base(imgSrc)
-					MakeAFolder("img")
-
+					MakeAFolder("./"+folderName +"/img")
 
 					resp, err := DownloadFile(url+imgSrc, 0)
 					if err != nil {
 						fmt.Println(err)
 						return
 					}
-					SaveBytesToFile("./img/"+fileName, resp)
+					SaveBytesToFile("./"+folderName +"/img/"+fileName, resp)
 					s.SetAttr("src", "./img/"+fileName)
 				}
 			}
@@ -149,7 +138,7 @@ func MakeAFolder(name string) {
 	}
 }
 
-func Mirror(url string) {
+func Mirror(url, Exclude, Reject string) {
 	res, err := http.Get(url) //"https://jonathanmh.com/web-scraping-golang-goquery/"
 	if err != nil {
 		fmt.Println(err)
@@ -162,8 +151,19 @@ func Mirror(url string) {
 		return
 	}
 
-	holder := FindStylesheet(doc, url)
-	holder = Findjs(holder, url)
-	holder = Findimg(holder, url)
-	fmt.Println(holder.Html())
+	folderName := strings.Split(url, "/")[2]
+	MakeAFolder(folderName)
+	var holder *goquery.Document
+	if (Exclude != "/css") {
+	holder = FindStylesheet(doc, url, folderName)
+	}
+	if (Exclude != "/js") {
+	holder = Findjs(holder, url, folderName)
+	}
+	if (Exclude != "/img") {
+	holder = Findimg(holder, url, folderName, Reject)
+	}
+	r, _ := holder.Html()
+	// fmt.Println(holder.Html())
+	SaveBytesToFile("./"+folderName +"/index.html", []byte(r))
 }

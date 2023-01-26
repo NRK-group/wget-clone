@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+
 	"wget/pkg"
 )
 
@@ -24,8 +25,10 @@ func init() {
 	flag.BoolVar(&I, "i", false, "Download multiple files")
 	flag.StringVar(&RateLimit, "rate-limit", "0", "The rate limit in k = KB/s or  M = MB/s")
 	flag.BoolVar(&Mirror, "mirror", false, "Mirror the whole site")
-	flag.StringVar(&Reject, "reject, R", "", "Reject files")
-	flag.StringVar(&Exclude, "exclude, X", "", "Exclude directory")
+	flag.StringVar(&Reject, "reject", "", "Reject files")
+	flag.StringVar(&Reject, "R", "", "Reject files")
+	flag.StringVar(&Exclude, "exclude", "", "Exclude directory")
+	flag.StringVar(&Exclude, "X", "", "Exclude directory")
 }
 
 func main() {
@@ -46,10 +49,12 @@ func main() {
 	if Mirror {
 		fmt.Println("Mirror the whole site is enabled")
 		url := flag.Arg(0)
-		pkg.Mirror(url)
+		pkg.Mirror(url, Exclude, Reject)
 	} else {
 		fmt.Println("Mirror the whole site is disabled")
 	}
+	fmt.Println("Exclude:", Exclude)
+	fmt.Println("Reject:", Reject)
 	/*
 		fmt.Println("Reject:", Reject)
 		fmt.Println("Exclude:", Exclude)
