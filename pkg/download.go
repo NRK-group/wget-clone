@@ -16,7 +16,6 @@ func (download *Download) DownloadFile(response *http.Response, rateLimit int64)
 		return nil, errors.New(response.Status)
 	}
 	var data bytes.Buffer
-	// if rateLimit > 0 {
 		// Create a ticker with a 1 second interval
 		ticker := time.NewTicker(time.Second)
 		defer ticker.Stop()
@@ -26,6 +25,7 @@ func (download *Download) DownloadFile(response *http.Response, rateLimit int64)
 			case <-ticker.C:
 				// Read up to rateLimit bytes from the response body
 				n, err := response.Body.Read(buf)
+				download.UpdateProgressBar(n)
 				if err != nil {
 					if err == io.EOF {
 						// Return the bytes and a nil error if EOF is reached
@@ -34,23 +34,12 @@ func (download *Download) DownloadFile(response *http.Response, rateLimit int64)
 					// Return nil and error if an error occurred
 					return nil, err
 				}
-				download.UpdateProgressBar(n)
 				if _, err := data.Write(buf[:n]); err != nil {
 					// Return nil and error if an error occurred
 					return nil, err
 				}
 			}
 		}
-	// } else {
-	// 	// Read from the response body without rate limiting
-	// 	_, err := io.Copy(&data, response.Body)
-	// 	if err != nil {
-	// 		// Return nil and error if an error occurred
-	// 		return nil, err
-	// 	}
-	// }
-	// Return the bytes and a nil error if successful
-	// return data.Bytes(), nil
 }
 
 func (downloads *Download)DownloadMultipleFiles(urls []string, ratelimit int64) ([][]byte, error) {

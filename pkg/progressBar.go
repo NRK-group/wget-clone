@@ -19,17 +19,25 @@ type Download struct {
 	PreviousBarLength int
 	ProgressBar       string
 	BarWidth          int
+	HideBar           bool
 }
 
 func (data *Download) UpdateProgressBar(n int) {
-	
-		data.CurrentBytes += float64(n)
-		data.Percentage = int((data.CurrentBytes * 100) / data.ContentLength)
-		fmt.Fprintf(os.Stdout, "\r")
+	data.CurrentBytes += float64(n)
+	data.Percentage = int((data.CurrentBytes * 100) / data.ContentLength)
+	fmt.Fprintf(os.Stdout, "\r")
+	if !data.HideBar {
 		data.PrintProgressBar()
+	}
 }
 
 func (data *Download) PrintProgressBar() {
+	// if contentlength is unknown
+	if data.ContentLength <= 0 {
+		fmt.Fprintf(os.Stdout, "\r")
+		fmt.Print("Download Time Unknown [Progress Bar Unavailable]")
+		return
+	}
 	data.CreateProgressBar()
 	fmt.Print(data.ProgressBar)
 }

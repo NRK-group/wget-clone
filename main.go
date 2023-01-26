@@ -65,12 +65,11 @@ func main() {
 	response, err := http.Get(url)
 	if err != nil {
 		// Return nil and error if request fails
-		return 
+		return
 	}
 	defer response.Body.Close()
-	
+
 	download := &pkg.Download{Response: response, StartTime: time.Now(), ContentLength: float64(response.ContentLength), BarWidth: pkg.GetTerminalLength()}
-	// download.StartProgressBar()
 	resp, err := download.DownloadFile(response, rate)
 	if err != nil {
 		fmt.Println(err)
