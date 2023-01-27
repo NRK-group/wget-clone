@@ -1,7 +1,10 @@
 package pkg
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"path"
@@ -10,19 +13,32 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-func ConvertUrlToResponse(url string) (response *http.Response) {
+func DownloadFile(URL string, rateLimit int64) ([]byte, error) {
 	// Send GET request to the provided URL
-	response, err := http.Get(url)
+	response, err := http.Get(URL)
 	if err != nil {
 		// Return nil and error if request fails
-		return
+		return nil, err
 	}
 	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		// Return nil and error if response status is not OK
+		return nil, errors.New(response.Status)
+	}
+	var data bytes.Buffer
 
-	return response
+	// Read from the response body without rate limiting
+	_, err = io.Copy(&data, response.Body)
+	if err != nil {
+		// Return nil and error if an error occurred
+		return nil, err
+	}
+
+	// Return the bytes and a nil error if successful
+	return data.Bytes(), nil
 }
 
-func (D *Download) FindStylesheet(doc *goquery.Document, url, folderName string) (rdoc *goquery.Document) {
+func FindStylesheet(doc *goquery.Document, url, folderName string) (rdoc *goquery.Document) {
 	doc.Find("link").Each(func(i int, s *goquery.Selection) {
 		imgSrc, exists := s.Attr("href")
 		if !exists {
@@ -31,7 +47,8 @@ func (D *Download) FindStylesheet(doc *goquery.Document, url, folderName string)
 			if strings.Contains(imgSrc, ".css") && strings.Contains(imgSrc, "https://") {
 				MakeAFolder("./" + folderName + "/css/")
 				fileName := path.Base(imgSrc)
-				resp, err := D.DownloadFile(ConvertUrlToResponse(imgSrc), 0)
+
+				resp, err := DownloadFile(imgSrc, 0)
 				if err != nil {
 					fmt.Println(err)
 					return
@@ -41,15 +58,13 @@ func (D *Download) FindStylesheet(doc *goquery.Document, url, folderName string)
 				s.SetAttr("href", "./css/"+fileName)
 			} else if strings.Contains(imgSrc, ".css") {
 				fileName := path.Base(imgSrc)
+
 				MakeAFolder("./" + folderName + "/css")
 
-				resp, err := D.DownloadFile(ConvertUrlToResponse("https://"+folderName+imgSrc), 0)
+				resp, err := DownloadFile("https://"+folderName+"/"+imgSrc, 0)
 				if err != nil {
 					fmt.Println(err)
 					return
-				}
-				if fileName[len(fileName)-4:] != ".css" {
-					fileName = fileName + ".css"
 				}
 
 				SaveBytesToFile("./"+folderName+"/css/"+fileName, resp)
@@ -63,7 +78,7 @@ func (D *Download) FindStylesheet(doc *goquery.Document, url, folderName string)
 	return doc
 }
 
-func (D *Download) Findjs(doc *goquery.Document, url, folderName string) (rdoc *goquery.Document) {
+func Findjs(doc *goquery.Document, url, folderName string) (rdoc *goquery.Document) {
 	doc.Find("script").Each(func(i int, s *goquery.Selection) {
 		imgSrc, exists := s.Attr("src")
 		if !exists {
@@ -72,7 +87,7 @@ func (D *Download) Findjs(doc *goquery.Document, url, folderName string) (rdoc *
 			if strings.Contains(imgSrc, ".js") && strings.Contains(imgSrc, "https://") {
 				MakeAFolder("./" + folderName + "/js")
 				fileName := path.Base(imgSrc)
-				resp, err := D.DownloadFile(ConvertUrlToResponse(imgSrc), 0)
+				resp, err := DownloadFile(imgSrc, 0)
 				if err != nil {
 					fmt.Println(err)
 					return
@@ -84,7 +99,7 @@ func (D *Download) Findjs(doc *goquery.Document, url, folderName string) (rdoc *
 				fileName := path.Base(imgSrc)
 				MakeAFolder("./" + folderName + "/js")
 
-				resp, err := D.DownloadFile(ConvertUrlToResponse(url+imgSrc), 0)
+				resp, err := DownloadFile("https://"+folderName+"/"+imgSrc, 0)
 				if err != nil {
 					fmt.Println(err)
 					return
@@ -100,7 +115,7 @@ func (D *Download) Findjs(doc *goquery.Document, url, folderName string) (rdoc *
 	return doc
 }
 
-func (D *Download) Findimg(doc *goquery.Document, url, folderName, Reject string) (rdoc *goquery.Document) {
+func Findimg(doc *goquery.Document, url, folderName, Reject string) (rdoc *goquery.Document) {
 	listImgSuffixes := []string{"jpg", "gif", "webb", "jpeg", "png"}
 
 	doc.Find("img").Each(func(i int, s *goquery.Selection) {
@@ -114,7 +129,7 @@ func (D *Download) Findimg(doc *goquery.Document, url, folderName, Reject string
 						MakeAFolder("./" + folderName + "/img")
 						fileName := path.Base(imgSrc)
 
-						resp, err := D.DownloadFile(ConvertUrlToResponse(imgSrc), 0)
+						resp, err := DownloadFile(imgSrc, 0)
 						if err != nil {
 							fmt.Println(err)
 							return
@@ -127,7 +142,7 @@ func (D *Download) Findimg(doc *goquery.Document, url, folderName, Reject string
 						fileName := path.Base(imgSrc)
 						MakeAFolder("./" + folderName + "/img")
 
-						resp, err := D.DownloadFile(ConvertUrlToResponse(url+imgSrc), 0)
+						resp, err := DownloadFile("https://"+folderName+"/"+imgSrc, 0)
 						if err != nil {
 							fmt.Println(err)
 							return
@@ -139,6 +154,55 @@ func (D *Download) Findimg(doc *goquery.Document, url, folderName, Reject string
 			}
 		}
 		// fmt.Println(imgSrc)
+	})
+
+	return doc
+}
+
+func FindUrlInStyle(doc *goquery.Document, url, folderName, Reject string) (rdoc *goquery.Document) {
+	// var list []string
+	doc.Find("style").Each(func(i int, s *goquery.Selection) {
+		lines := strings.Split(s.Text(), "\n")
+		//var returnStringArr []string
+		var returnString []string
+
+		//
+		for _, line := range lines {
+			if !strings.Contains(line, "*") && strings.Contains(line, "background-image") {
+				urls := strings.Split(strings.Split(line, ":")[1], ",")
+				returnString = append(returnString, strings.Split(line, ":")[0])
+				for _, url := range urls {
+					if strings.Contains(url, "url('") {
+
+						fmt.Println(strings.Split(url, `'`)[1][1:])
+
+						
+						MakeAFolder("./" + folderName + "/img")
+
+						resp, err := DownloadFile("http://"+folderName+"/"+strings.Split(url, `'`)[1][1:], 0)
+						if err != nil {
+							fmt.Println("teee")
+							fmt.Println(err)
+							return
+						}
+						SaveBytesToFile("./"+folderName+"/img/"+strings.Split(url, `'`)[1][1:], resp)
+
+/*
+
+						returnString = append(returnString, "url('./" + "https://"+folderName + "/img" + strings.Split(url, `'`)[1] + "')") */
+					}
+				}
+				//returnStringArr = append(returnStringArr, urls[0])
+			}
+
+			// } else {
+			// 	returnStringArr = append(returnStringArr, line)
+			// }
+		}
+
+		// s.SetText()
+
+		// fmt.Println(strings.Split(lines[5], ":")[1])
 	})
 
 	return doc
@@ -169,18 +233,18 @@ func Mirror(url, Exclude, Reject string) {
 
 	folderName := strings.Split(url, "/")[2]
 	MakeAFolder(folderName)
-	var D Download
-
 	var holder *goquery.Document
 	if Exclude != "/css" {
-		holder = D.FindStylesheet(doc, url, folderName)
+		holder = FindStylesheet(doc, url, folderName)
 	}
 	if Exclude != "/js" {
-		holder = D.Findjs(holder, url, folderName)
+		holder = Findjs(holder, url, folderName)
 	}
 	if Exclude != "/img" {
-		holder = D.Findimg(holder, url, folderName, Reject)
+		holder = Findimg(holder, url, folderName, Reject)
 	}
+
+	FindUrlInStyle(holder, url, folderName, Reject)
 	r, _ := holder.Html()
 	// fmt.Println(holder.Html())
 	SaveBytesToFile("./"+folderName+"/index.html", []byte(r))
