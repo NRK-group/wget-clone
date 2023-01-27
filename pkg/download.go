@@ -14,35 +14,35 @@ func (download *Download) DownloadFile(response *http.Response, rateLimit int64)
 	if response.StatusCode != http.StatusOK {
 		// Return nil and error if response status is not OK
 		return nil, errors.New(response.Status)
-	} 
+	}
 	var data bytes.Buffer
-		// Create a ticker with a 1 second interval
-		ticker := time.NewTicker(time.Second)
-		defer ticker.Stop()
-		buf := make([]byte, rateLimit)
-		for {
-			select {
-			case <-ticker.C:
-				// Read up to rateLimit bytes from the response body
-				n, err := response.Body.Read(buf)
-				download.UpdateProgressBar(n)
-				if err != nil {
-					if err == io.EOF {
-						// Return the bytes and a nil error if EOF is reached
-						return data.Bytes(), nil
-					}
-					// Return nil and error if an error occurred
-					return nil, err
+	// Create a ticker with a 1 second interval
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+	buf := make([]byte, rateLimit)
+	for {
+		select {
+		case <-ticker.C:
+			// Read up to rateLimit bytes from the response body
+			n, err := response.Body.Read(buf)
+			download.UpdateProgressBar(n)
+			if err != nil {
+				if err == io.EOF {
+					// Return the bytes and a nil error if EOF is reached
+					return data.Bytes(), nil
 				}
-				if _, err := data.Write(buf[:n]); err != nil {
-					// Return nil and error if an error occurred
-					return nil, err
-				}
+				// Return nil and error if an error occurred
+				return nil, err
+			}
+			if _, err := data.Write(buf[:n]); err != nil {
+				// Return nil and error if an error occurred
+				return nil, err
 			}
 		}
+	}
 }
 
-func (downloads *Download)DownloadMultipleFiles(urls []string, ratelimit int64) ([][]byte, error) {
+func (downloads *Download) DownloadMultipleFiles(urls []string, ratelimit int64) ([][]byte, error) {
 	done := make(chan []byte, len(urls))
 	errch := make(chan error, len(urls))
 	for _, URL := range urls {
@@ -77,8 +77,17 @@ func (downloads *Download)DownloadMultipleFiles(urls []string, ratelimit int64) 
 	return bytesArray, err
 }
 
-func SaveBytesToFile(fileName string, r []byte) {
-	err := os.WriteFile(fileName, r, 0o644)
+func SaveBytesToFile(pathName, fileName string, r []byte) {
+	if pathName != "./" {
+		err := os.MkdirAll(pathName, 0o755)
+		if err != nil {
+			// handle the error
+			fmt.Println(err)
+			return
+		}
+		pathName += "/"
+	}
+	err := os.WriteFile(pathName + fileName, r, 0o644)
 	if err != nil {
 		fmt.Println(err)
 	}

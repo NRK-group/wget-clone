@@ -19,7 +19,6 @@ func MegOrGig(bytes float64) string {
 	if bytes >= (1 << 30) {
 		return fmt.Sprintf("%.2f GB", float64(bytes)/(1<<30))
 	} else {
-		fmt.Println(float64(bytes)/(1<<20))
 		return fmt.Sprintf("%.2f MB", float64(bytes)/(1<<20))
 	}
 }

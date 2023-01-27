@@ -38,6 +38,9 @@ func main() {
 	flag.Parse()
 	url := flag.Arg(0)
 	fileName := path.Base(url) // extract the file name from the url
+	if O != "" && !I {
+		fileName = O
+	}
 	rate, err := pkg.GetRateLimit(RateLimit)
 	if err != nil {
 		fmt.Println(err)
@@ -50,24 +53,22 @@ func main() {
 		return
 	}
 	defer response.Body.Close()
-	download := &pkg.Download{Response: response, StartTime: time.Now(), ContentLength: float64(response.ContentLength), BarWidth: pkg.GetTerminalLength(), Path: P + fileName, Url: url}
-	if B {
-		fmt.Println("Output in wget-log is enabled")
-	} else {
-		fmt.Println("Output in wget-log is disabled")
+	download := &pkg.Download{Response: response, StartTime: time.Now(), ContentLength: float64(response.ContentLength), BarWidth: pkg.GetTerminalLength(), Url: url}
+	if P != "./" {
+		download.Path = P + "/" + fileName
 	}
 	if I && (O != "") {
+		download.HideBar = true
 		fmt.Println("Download multiple files is enabled")
 	} else {
-		download.PrintBefore()
+
+		download.PrintOrLogBefore(B)
 		resp, err := download.DownloadFile(response, rate)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
-		if O != "" {
-			fileName = O
-		}
+		
 		filePath := P
 		if strings.Contains(P, "~") {
 			usr, err := os.UserHomeDir()
@@ -77,7 +78,8 @@ func main() {
 			}
 			filePath = path.Join(usr, P[1:])
 		}
-		pkg.SaveBytesToFile(path.Join(filePath, fileName), resp)
-		download.PrintAfter()
+		pkg.SaveBytesToFile(filePath, fileName, resp)
+		download.PrintOrLogAfter(B)
+
 	}
 }
