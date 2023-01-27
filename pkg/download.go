@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path"
 	"time"
 )
 
@@ -42,30 +43,46 @@ func (download *Download) DownloadFile(response *http.Response, rateLimit int64)
 	}
 }
 
-func (downloads *Download) DownloadMultipleFiles(urls []string, ratelimit int64) ([][]byte, error) {
+func DownloadMultipleFiles(P string, urls []string, ratelimit int64) ([][]byte, []string, error) {
 	done := make(chan []byte, len(urls))
 	errch := make(chan error, len(urls))
+	fileNames := make(chan string, len(urls))
 	for _, URL := range urls {
 		go func(URL string) {
+			fileName := path.Base(URL)
+
+			// Send GET request to the provided URL
 			response, err := http.Get(URL)
 			if err != nil {
 				// Return nil and error if request fails
 				return
 			}
-			b, err := downloads.DownloadFile(response, ratelimit)
+			defer response.Body.Close()
+			download := &Download{Response: response, StartTime: time.Now(), ContentLength: float64(response.ContentLength), BarWidth: GetTerminalLength(), Url: URL}
+			if P != "./" {
+				download.Path = P + "/" + fileName
+			}
+
+			download.HideBar = true
+
+			b, err := download.DownloadFile(response, ratelimit)
 			if err != nil {
 				errch <- err
 				done <- nil
+				fileNames <- ""
 				return
 			}
 			done <- b
 			errch <- nil
+			fileNames <- fileName
 		}(URL)
 	}
 	bytesArray := make([][]byte, 0)
+	namesArray := make([]string, 0)
 	var errStr string
 	for i := 0; i < len(urls); i++ {
 		bytesArray = append(bytesArray, <-done)
+		namesArray = append(namesArray, <-fileNames)
 		if err := <-errch; err != nil {
 			errStr = errStr + " " + err.Error()
 		}
@@ -74,7 +91,7 @@ func (downloads *Download) DownloadMultipleFiles(urls []string, ratelimit int64)
 	if errStr != "" {
 		err = errors.New(errStr)
 	}
-	return bytesArray, err
+	return bytesArray, namesArray, err
 }
 
 func SaveBytesToFile(pathName, fileName string, r []byte) {
@@ -87,7 +104,7 @@ func SaveBytesToFile(pathName, fileName string, r []byte) {
 		}
 		pathName += "/"
 	}
-	err := os.WriteFile(pathName + fileName, r, 0o644)
+	err := os.WriteFile(pathName+fileName, r, 0o644)
 	if err != nil {
 		fmt.Println(err)
 	}
