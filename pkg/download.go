@@ -58,12 +58,13 @@ func DownloadMultipleFiles(P string, urls []string, ratelimit int64) ([][]byte, 
 				return
 			}
 			defer response.Body.Close()
-			download := &Download{Response: response, StartTime: time.Now(), ContentLength: float64(response.ContentLength), BarWidth: GetTerminalLength(), Url: URL}
+			download := &Download{Response: response, StartTime: time.Now(), ContentLength: float64(response.ContentLength), BarWidth: GetTerminalLength(), Url: URL, }
 			if P != "./" {
 				download.Path = P + "/" + fileName
 			}
 
 			download.HideBar = true
+			fmt.Println("Download Started: ", URL)
 
 			b, err := download.DownloadFile(response, ratelimit)
 			if err != nil {
@@ -72,7 +73,8 @@ func DownloadMultipleFiles(P string, urls []string, ratelimit int64) ([][]byte, 
 				fileNames <- ""
 				return
 			}
-			done <- b
+			SaveBytesToFile(P, fileName, b)
+			// done <- b
 			errch <- nil
 			fileNames <- fileName
 		}(URL)
