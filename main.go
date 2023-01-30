@@ -46,7 +46,10 @@ func main() {
 		return
 	}
 
-	if I != "" && (O == "") {
+	if Mirror {
+		pkg.Mirror(url, Exclude, Reject)
+		
+	} else if I != "" && (O == "") {
 		urls, err := pkg.ReadDownloadFile(I)
 		if err != nil {
 			fmt.Println(err)
