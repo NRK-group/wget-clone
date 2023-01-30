@@ -4,7 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"os"
 	"path"
+	"strings"
 	"time"
 
 	"wget/pkg"
@@ -14,7 +16,7 @@ var (
 	B         bool
 	O         string
 	P         string
-	I         bool
+	I         string
 	RateLimit string
 	Mirror    bool
 	Reject    string
@@ -25,7 +27,7 @@ func init() {
 	flag.BoolVar(&B, "B", false, "Output in wget-log")
 	flag.StringVar(&O, "O", "", "Specify download filename")
 	flag.StringVar(&P, "P", "./", "Specify download directory")
-	flag.BoolVar(&I, "i", false, "Download multiple files")
+	flag.StringVar(&I, "i", "", "Download multiple files")
 	flag.StringVar(&RateLimit, "rate-limit", "10000M", "The rate limit in k = KB/s or  M = MB/s")
 	flag.BoolVar(&Mirror, "mirror", false, "Mirror the whole site")
 	flag.StringVar(&Reject, "reject", "", "Reject files")
@@ -36,53 +38,75 @@ func init() {
 
 func main() {
 	flag.Parse()
-
 	url := flag.Arg(0)
-
-	// Send GET request to the provided URL
-	response, err := http.Get(url)
-	if err != nil {
-		// Return nil and error if request fails
-		return
-	}
-	defer response.Body.Close()
-
-	download := &pkg.Download{Response: response, StartTime: time.Now(), ContentLength: float64(response.ContentLength), BarWidth: pkg.GetTerminalLength()}
-
-	if B {
-		fmt.Println("Output in wget-log is enabled")
-	} else {
-		fmt.Println("Output in wget-log is disabled")
-	}
-	fmt.Println("filename:", O)
-	fmt.Println("directory:", P)
-	if I {
-		fmt.Println("Download multiple files is enabled")
-	} else {
-		fmt.Println("Download multiple files is disabled")
-	}
-	fmt.Println("Rate Limit: ", RateLimit)
-	if Mirror {
-		fmt.Println("Mirror the whole site is enabled")
-		pkg.Mirror(url, Exclude, Reject)
-	} else {
-		fmt.Println("Mirror the whole site is disabled")
-	}
-	fmt.Println("Reject:", Reject)
-	fmt.Println("Exclude:", Exclude)
-	fmt.Println("URL:", flag.Arg(0))
-
+	
 	rate, err := pkg.GetRateLimit(RateLimit)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	resp, err := download.DownloadFile(response, rate)
-	if err != nil {
-		fmt.Println(err)
-		return
+	if I != "" && (O == "") {
+		urls, err := pkg.ReadDownloadFile(I)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		resp, fileNames, err := pkg.DownloadMultipleFiles(P, urls, rate)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		
+		filePath := P
+		if strings.Contains(P, "~") {
+			usr, err := os.UserHomeDir()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			filePath = path.Join(usr, P[1:])
+		}
+
+		for i, r := range resp {
+			pkg.SaveBytesToFile(filePath, fileNames[i], r)
+			fmt.Printf("Downloaded file %s \n", fileNames[i])
+		}
+	} else {
+		fileName := path.Base(url) // extract the file name from the url
+		if O != "" && I == "" {
+			fileName = O
+		}
+		// Send GET request to the provided URL
+		response, err := http.Get(url)
+		if err != nil {
+			// Return nil and error if request fails
+			return
+		}
+		defer response.Body.Close()
+		download := &pkg.Download{Response: response, StartTime: time.Now(), ContentLength: float64(response.ContentLength), BarWidth: pkg.GetTerminalLength(), Url: url}
+		if P != "./" {
+			download.Path = P + "/" + fileName
+		}
+		download.PrintOrLogBefore(B)
+		resp, err := download.DownloadFile(response, rate)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		
+		filePath := P
+		if strings.Contains(P, "~") {
+			usr, err := os.UserHomeDir()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			filePath = path.Join(usr, P[1:])
+		}
+		pkg.SaveBytesToFile(filePath, fileName, resp)
+		download.PrintOrLogAfter(B)
+
 	}
-	fileName := path.Base(url) // extract the file name from the url
-	pkg.SaveBytesToFile(fileName, resp)
 }

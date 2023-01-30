@@ -58,7 +58,7 @@ func FindStylesheet(doc *goquery.Document, url, folderName string) (rdoc *goquer
 					fileName = strings.SplitAfter(fileName, ".css")[0]
 				}
 				
-				SaveBytesToFile("./"+folderName+"/css/"+fileName, resp)
+				SaveBytesToFile("./"+folderName+"/css", fileName, resp)
 
 				s.SetAttr("href", "./css/"+fileName)
 			} else if strings.Contains(imgSrc, ".css") {
@@ -76,7 +76,7 @@ func FindStylesheet(doc *goquery.Document, url, folderName string) (rdoc *goquer
 					fileName = strings.SplitAfter(fileName, ".css")[0]
 				}
 
-				SaveBytesToFile("./"+folderName+"/css/"+fileName, resp)
+				SaveBytesToFile("./"+folderName+"/css", fileName, resp)
 
 				s.SetAttr("href", "./css/"+fileName)
 			}
@@ -101,7 +101,7 @@ func Findjs(doc *goquery.Document, url, folderName string) (rdoc *goquery.Docume
 					fmt.Println(err)
 					return
 				}
-				SaveBytesToFile("./"+folderName+"/js/"+fileName, resp)
+				SaveBytesToFile("./"+folderName+"/js", fileName, resp)
 
 				s.SetAttr("src", "./js/"+fileName)
 			} else if strings.Contains(imgSrc, ".js") {
@@ -113,7 +113,7 @@ func Findjs(doc *goquery.Document, url, folderName string) (rdoc *goquery.Docume
 					fmt.Println(err)
 					return
 				}
-				SaveBytesToFile("./"+folderName+"/js/"+fileName, resp)
+				SaveBytesToFile("./"+folderName+"/js", fileName, resp)
 
 				s.SetAttr("src", "./js/"+fileName)
 			}
@@ -144,7 +144,7 @@ func Findimg(doc *goquery.Document, url, folderName, Reject string) (rdoc *goque
 							return
 						}
 
-						SaveBytesToFile("./"+folderName+"/img/"+fileName, resp)
+						SaveBytesToFile("./"+folderName+"/img", fileName, resp)
 
 						s.SetAttr("src", "./img/"+fileName)
 					} else if strings.Contains(imgSrc, n) {
@@ -156,7 +156,7 @@ func Findimg(doc *goquery.Document, url, folderName, Reject string) (rdoc *goque
 							fmt.Println(err)
 							return
 						}
-						SaveBytesToFile("./"+folderName+"/img/"+fileName, resp)
+						SaveBytesToFile("./"+folderName+"/img", fileName, resp)
 						s.SetAttr("src", "./img/"+fileName)
 					}
 				}
@@ -190,7 +190,7 @@ func FindUrlInStyle(doc *goquery.Document, url, folderName, Reject string) (rdoc
 						fmt.Println(err)
 						return
 					}
-					SaveBytesToFile("./"+folderName+"/img/"+strings.Split(url, `'`)[1][1:], resp)
+					SaveBytesToFile("./"+folderName+"/img", strings.Split(url, `'`)[1][1:], resp)
 
 					returnString = append(returnString, "url("+`'`+"./img"+strings.Split(url, `'`)[1]+`')`)
 				}
@@ -240,10 +240,10 @@ func Mirror(url, Exclude, Reject string) {
 	if Exclude != "/img" {
 		holder = Findimg(holder, url, folderName, Reject)
 		returnStr := FindUrlInStyle(holder, url, folderName, Reject)
-		SaveBytesToFile("./"+folderName+"/index.html", []byte(returnStr))
+		SaveBytesToFile("./"+folderName, "index.html", []byte(returnStr))
 	} else {
 
 		r, _ := holder.Html()
-		SaveBytesToFile("./"+folderName+"/index.html", []byte(r))
+		SaveBytesToFile("./"+folderName, "index.html", []byte(r))
 	}
 }
