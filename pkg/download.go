@@ -51,7 +51,6 @@ func DownloadMultipleFiles(P string, urls []string, ratelimit int64) ([][]byte, 
 		go func(URL string) {
 			fileName := path.Base(URL)
 
-			http.Header.Set()
 			// Send GET request to the provided URL
 			response, err := http.Get(URL)
 			if err != nil {

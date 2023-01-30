@@ -48,7 +48,6 @@ func main() {
 
 	if Mirror {
 		pkg.Mirror(url, Exclude, Reject)
-		
 	} else if I != "" && (O == "") {
 		urls, err := pkg.ReadDownloadFile(I)
 		if err != nil {
@@ -81,12 +80,26 @@ func main() {
 		if O != "" && I == "" {
 			fileName = O
 		}
-		// Send GET request to the provided URL
-		response, err := http.Get(url)
+		client := &http.Client{}
+
+		res, err := http.NewRequest("GET", "http://ipv4.download.thinkbroadband.com/20MB.zip", nil)
 		if err != nil {
-			// Return nil and error if request fails
+			// fmt.Println(err)
 			return
 		}
+
+		res.Header.Set("User-Agent", "golang-wget-project")
+		response, err := client.Do(res)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		// Send GET request to the provided URL
+		// response, err := http.Get(url)
+		// if err != nil {
+		// 	// Return nil and error if request fails
+		// 	return
+		// }
 		defer response.Body.Close()
 		download := &pkg.Download{Response: response, StartTime: time.Now(), ContentLength: float64(response.ContentLength), BarWidth: pkg.GetTerminalLength(), Url: url, Path: "./" + fileName}
 		if P != "./" {
