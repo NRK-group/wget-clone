@@ -28,7 +28,7 @@ func init() {
 	flag.StringVar(&O, "O", "", "Specify download filename")
 	flag.StringVar(&P, "P", "./", "Specify download directory")
 	flag.StringVar(&I, "i", "", "Download multiple files")
-	flag.StringVar(&RateLimit, "rate-limit", "10000M", "The rate limit in k = KB/s or  M = MB/s")
+	flag.StringVar(&RateLimit, "rate-limit", "1000M", "The rate limit in k = KB/s or  M = MB/s")
 	flag.BoolVar(&Mirror, "mirror", false, "Mirror the whole site")
 	flag.StringVar(&Reject, "reject", "", "Reject files")
 	flag.StringVar(&Reject, "R", "", "Reject files")
@@ -48,15 +48,8 @@ func main() {
 
 	if Mirror {
 		pkg.Mirror(url, Exclude, Reject)
-		
 	} else if I != "" && (O == "") {
 		urls, err := pkg.ReadDownloadFile(I)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		resp, fileNames, err := pkg.DownloadMultipleFiles(P, urls, rate)
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -72,21 +65,27 @@ func main() {
 			filePath = path.Join(usr, P[1:])
 		}
 
-		for i, r := range resp {
-			pkg.SaveBytesToFile(filePath, fileNames[i], r)
-			fmt.Printf("Downloaded file %s \n", fileNames[i])
-		}
+		pkg.DownloadMultipleFiles(filePath, urls, rate)
+
+
 	} else {
 		fileName := path.Base(url) // extract the file name from the url
 		if O != "" && I == "" {
 			fileName = O
 		}
-		// Send GET request to the provided URL
-		response, err := http.Get(url)
+		client := &http.Client{}
+
+		res, err := http.NewRequest("GET", url, nil)
 		if err != nil {
-			// Return nil and error if request fails
 			return
 		}
+
+		res.Header.Set("User-Agent", "golang-wget-project")
+		response, err := client.Do(res)
+		if err != nil {
+			return
+		}
+
 		defer response.Body.Close()
 		download := &pkg.Download{Response: response, StartTime: time.Now(), ContentLength: float64(response.ContentLength), BarWidth: pkg.GetTerminalLength(), Url: url, Path: "./" + fileName}
 		if P != "./" {
