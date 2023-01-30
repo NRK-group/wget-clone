@@ -64,7 +64,9 @@ func main() {
 			}
 			filePath = path.Join(usr, P[1:])
 		}
+
 		pkg.DownloadMultipleFiles(filePath, urls, rate)
+
 
 	} else {
 		fileName := path.Base(url) // extract the file name from the url

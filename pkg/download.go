@@ -47,8 +47,8 @@ func (download *Download) DownloadFile(response *http.Response, rateLimit int64)
 func DownloadMultipleFiles(P string, urls []string, ratelimit int64) {
 	var wg sync.WaitGroup
 	for _, URL := range urls {
+		wg.Add(1)
 		go func(URL string) {
-			wg.Add(1)
 			defer wg.Done()
 			fileName := path.Base(URL)
 
