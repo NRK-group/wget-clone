@@ -39,7 +39,7 @@ func init() {
 func main() {
 	flag.Parse()
 	url := flag.Arg(0)
-	
+
 	rate, err := pkg.GetRateLimit(RateLimit)
 	if err != nil {
 		fmt.Println(err)
@@ -61,7 +61,7 @@ func main() {
 			fmt.Println(err)
 			return
 		}
-		
+
 		filePath := P
 		if strings.Contains(P, "~") {
 			usr, err := os.UserHomeDir()
@@ -88,7 +88,7 @@ func main() {
 			return
 		}
 		defer response.Body.Close()
-		download := &pkg.Download{Response: response, StartTime: time.Now(), ContentLength: float64(response.ContentLength), BarWidth: pkg.GetTerminalLength(), Url: url}
+		download := &pkg.Download{Response: response, StartTime: time.Now(), ContentLength: float64(response.ContentLength), BarWidth: pkg.GetTerminalLength(), Url: url, Path: "./" + fileName}
 		if P != "./" {
 			download.Path = P + "/" + fileName
 		}
@@ -98,7 +98,7 @@ func main() {
 			fmt.Println(err)
 			return
 		}
-		
+
 		filePath := P
 		if strings.Contains(P, "~") {
 			usr, err := os.UserHomeDir()
