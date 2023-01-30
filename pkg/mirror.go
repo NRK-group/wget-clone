@@ -53,6 +53,11 @@ func FindStylesheet(doc *goquery.Document, url, folderName string) (rdoc *goquer
 					fmt.Println(err)
 					return
 				}
+
+				if fileName[len(fileName)-4:] != ".css" && strings.Contains(fileName, ".css") {
+					fileName = strings.SplitAfter(fileName, ".css")[0]
+				}
+				
 				SaveBytesToFile("./"+folderName+"/css/"+fileName, resp)
 
 				s.SetAttr("href", "./css/"+fileName)
@@ -67,11 +72,15 @@ func FindStylesheet(doc *goquery.Document, url, folderName string) (rdoc *goquer
 					return
 				}
 
+				if fileName[len(fileName)-4:] != ".css" && strings.Contains(fileName, ".css") {
+					fileName = strings.SplitAfter(fileName, ".css")[0]
+				}
+
 				SaveBytesToFile("./"+folderName+"/css/"+fileName, resp)
 
 				s.SetAttr("href", "./css/"+fileName)
 			}
-			// fmt.Println(imgSrc)
+
 		}
 	})
 
@@ -153,59 +162,47 @@ func Findimg(doc *goquery.Document, url, folderName, Reject string) (rdoc *goque
 				}
 			}
 		}
-		// fmt.Println(imgSrc)
+
 	})
 
 	return doc
 }
 
-func FindUrlInStyle(doc *goquery.Document, url, folderName, Reject string) (rdoc *goquery.Document) {
-	// var list []string
-	doc.Find("style").Each(func(i int, s *goquery.Selection) {
-		lines := strings.Split(s.Text(), "\n")
-		//var returnStringArr []string
-		var returnString []string
+func FindUrlInStyle(doc *goquery.Document, url, folderName, Reject string) (rdoc string) {
+	docString, _ := doc.Html()
+	lines := strings.Split(docString, "\n")
+	var returnStringArr []string
+	var returnString []string
+	var tagName string
 
-		//
-		for _, line := range lines {
-			if !strings.Contains(line, "*") && strings.Contains(line, "background-image") {
-				urls := strings.Split(strings.Split(line, ":")[1], ",")
-				returnString = append(returnString, strings.Split(line, ":")[0])
-				for _, url := range urls {
-					if strings.Contains(url, "url('") {
+	//
+	for _, line := range lines {
+		if !strings.Contains(line, "*") && strings.Contains(line, "background-image") {
+			urls := strings.Split(strings.Split(line, ":")[1], ",")
+			tagName = strings.Split(line, ":")[0] + ": "
+			for _, url := range urls {
+				if strings.Contains(url, "url('") {
 
-						fmt.Println(strings.Split(url, `'`)[1][1:])
+					MakeAFolder("./" + folderName + "/img")
 
-						
-						MakeAFolder("./" + folderName + "/img")
-
-						resp, err := DownloadFile("http://"+folderName+"/"+strings.Split(url, `'`)[1][1:], 0)
-						if err != nil {
-							fmt.Println("teee")
-							fmt.Println(err)
-							return
-						}
-						SaveBytesToFile("./"+folderName+"/img/"+strings.Split(url, `'`)[1][1:], resp)
-
-/*
-
-						returnString = append(returnString, "url('./" + "https://"+folderName + "/img" + strings.Split(url, `'`)[1] + "')") */
+					resp, err := DownloadFile("http://"+folderName+"/"+strings.Split(url, `'`)[1][1:], 0)
+					if err != nil {
+						fmt.Println(err)
+						return
 					}
+					SaveBytesToFile("./"+folderName+"/img/"+strings.Split(url, `'`)[1][1:], resp)
+
+					returnString = append(returnString, "url("+`'`+"./img"+strings.Split(url, `'`)[1]+`')`)
 				}
-				//returnStringArr = append(returnStringArr, urls[0])
 			}
 
-			// } else {
-			// 	returnStringArr = append(returnStringArr, line)
-			// }
+			returnStringArr = append(returnStringArr, tagName+strings.Join(returnString, ",")+";")
+		} else {
+			returnStringArr = append(returnStringArr, line)
 		}
+	}
 
-		// s.SetText()
-
-		// fmt.Println(strings.Split(lines[5], ":")[1])
-	})
-
-	return doc
+	return strings.Join(returnStringArr, "\n")
 }
 
 func MakeAFolder(name string) {
@@ -219,7 +216,7 @@ func MakeAFolder(name string) {
 }
 
 func Mirror(url, Exclude, Reject string) {
-	res, err := http.Get(url) //"https://jonathanmh.com/web-scraping-golang-goquery/"
+	res, err := http.Get(url) 
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -242,10 +239,11 @@ func Mirror(url, Exclude, Reject string) {
 	}
 	if Exclude != "/img" {
 		holder = Findimg(holder, url, folderName, Reject)
-	}
+		returnStr := FindUrlInStyle(holder, url, folderName, Reject)
+		SaveBytesToFile("./"+folderName+"/index.html", []byte(returnStr))
+	} else {
 
-	FindUrlInStyle(holder, url, folderName, Reject)
-	r, _ := holder.Html()
-	// fmt.Println(holder.Html())
-	SaveBytesToFile("./"+folderName+"/index.html", []byte(r))
+		r, _ := holder.Html()
+		SaveBytesToFile("./"+folderName+"/index.html", []byte(r))
+	}
 }
