@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"sync"
 	"time"
 )
 
@@ -43,20 +44,27 @@ func (download *Download) DownloadFile(response *http.Response, rateLimit int64)
 	}
 }
 
-func DownloadMultipleFiles(P string, urls []string, ratelimit int64) ([][]byte, []string, error) {
-	done := make(chan []byte, len(urls))
-	errch := make(chan error, len(urls))
-	fileNames := make(chan string, len(urls))
+func DownloadMultipleFiles(P string, urls []string, ratelimit int64) {
+	var wg sync.WaitGroup
 	for _, URL := range urls {
 		go func(URL string) {
+			wg.Add(1)
+			defer wg.Done()
 			fileName := path.Base(URL)
 
-			// Send GET request to the provided URL
-			response, err := http.Get(URL)
+			client := &http.Client{}
+
+			res, err := http.NewRequest("GET", URL, nil)
 			if err != nil {
-				// Return nil and error if request fails
 				return
 			}
+
+			res.Header.Set("User-Agent", "golang-wget-project")
+			response, err := client.Do(res)
+			if err != nil {
+				return
+			}
+			fmt.Println("Download started --> ", fileName)
 			defer response.Body.Close()
 			download := &Download{Response: response, StartTime: time.Now(), ContentLength: float64(response.ContentLength), BarWidth: GetTerminalLength(), Url: URL}
 			if P != "./" {
@@ -67,31 +75,14 @@ func DownloadMultipleFiles(P string, urls []string, ratelimit int64) ([][]byte, 
 
 			b, err := download.DownloadFile(response, ratelimit)
 			if err != nil {
-				errch <- err
-				done <- nil
-				fileNames <- ""
+				fmt.Println("Error downloading ", fileName, " ", err)
 				return
 			}
-			done <- b
-			errch <- nil
-			fileNames <- fileName
+			SaveBytesToFile(P, fileName, b)
+			fmt.Printf("Downloaded file %s \n", fileName)
 		}(URL)
 	}
-	bytesArray := make([][]byte, 0)
-	namesArray := make([]string, 0)
-	var errStr string
-	for i := 0; i < len(urls); i++ {
-		bytesArray = append(bytesArray, <-done)
-		namesArray = append(namesArray, <-fileNames)
-		if err := <-errch; err != nil {
-			errStr = errStr + " " + err.Error()
-		}
-	}
-	var err error
-	if errStr != "" {
-		err = errors.New(errStr)
-	}
-	return bytesArray, namesArray, err
+	wg.Wait()
 }
 
 func SaveBytesToFile(pathName, fileName string, r []byte) {
